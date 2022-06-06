@@ -84,6 +84,7 @@ show_map()
 def update_player():
     global falling
     global player_x, player_y
+    global platform
 
     if platform[player_y + 1][player_x] in solid_ground:  # If the player is standing on solid ground,
         falling = False  # he shall not fall.
@@ -93,8 +94,15 @@ def update_player():
     if falling:  # If player is falling,
         player_y += 1  # simulate it!
 
-    if keyboard.up and platform[player_y][player_x] in [2, 4]:  # If player attempting to climb ladder,
+    if keyboard.up \
+        and (platform[player_y][player_x] in [2, 4]
+             or platform[player_y + 1][player_x] in [2, 4]):  # If player attempting to climb ladder,
         player_y -= 1  # let him do so.
+
+    if keyboard.down \
+            and platform[player_y + 1][player_x] in [1, 2, 4] \
+            and platform[player_y + 2][player_x] != 0:  # If player attempting to climb ladder,
+        player_y += 1  # let him do so.
 
     if keyboard.right and falling == False:  # If right key and player not falling,
         if player_x < platform_width - 2:  # and player isn't going to bash into the wall,
@@ -104,8 +112,8 @@ def update_player():
         if player_x > 0:  # and player isn't going to bash into the wall,
             player_x -= 1  # move player to the left.
 
-
-
+    if keyboard.space and platform[player_y][player_x] == 3:  # If space and player standing on coin,
+        platform[player_y][player_x] = 0  # let player take coin.
 
     pass
 
