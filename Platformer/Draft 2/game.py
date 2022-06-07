@@ -29,46 +29,89 @@ TILE_SIZE = 90
 player_image = random.choice([images.red, images.green, images.blue])
 player_x = 0
 player_y = 10
+score = 0
 
 # CREATE MAP
+ladder_pos = 0
 
-platform = []
 
-platform_width = int(HEIGHT / TILE_SIZE) * 2
-platform_height = int(WIDTH / TILE_SIZE) - 8
+def create_platform():
+    global platform, platform_width, platform_height
 
-for y in range(0, platform_height, 3):
-    platform.append([])
-    for x in range(0, platform_width):
-        platform[len(platform) - 1].append(0)
+    def create_row(y):
+        global platform, ladder_pos
 
-    platform.append([])
-    for x in range(0, platform_width):
-        platform[len(platform) - 1].append(0)
+        x = 0
+        x2 = -100
+        while 0 > x2 \
+                and (ladder_pos + 1) not in range(x2 - 1, x + 1) \
+                and 0 < ladder_pos:
+            x = random.randint(3, platform_width - 4)
+            x2 = x - 3
 
-    platform.append([])
-    for x in range(0, platform_width):
-        platform[len(platform) - 1].append(1)
+        if y != 1:
+            platform[y][x + 1] = 3
+        else:
+            platform[y][x + 1] = 5
 
-platform[1][7] = 3
-platform[2][8: 11] = 0, 0, 0
-platform[3][7] = 2
-platform[4][7] = 4
+        platform[y + 1][x2: x] = 0, 0, 0
 
-platform[4][9] = 3
-platform[5][10: 13] = 0, 0, 0
-platform[6][9] = 2
-platform[7][9] = 4
+        if x + 1 < platform_width:
+            platform[y + 2][x + 1] = 2
+            platform[y + 3][x + 1] = 4
+        else:
+            platform[y + 2][x] = 2
+            platform[y + 3][x] = 4
 
-platform[7][7] = 3
-platform[8][3: 6] = 0, 0, 0
-platform[9][7] = 2
-platform[10][7] = 4
+        ladder_pos = x + 1
+
+    platform = []
+
+    platform_width = int(HEIGHT / TILE_SIZE) * 2
+    platform_height = int(WIDTH / TILE_SIZE) - 8
+
+    for y in range(0, platform_height, 3):
+        platform.append([])
+        for x in range(0, platform_width):
+            platform[len(platform) - 1].append(0)
+
+        platform.append([])
+        for x in range(0, platform_width):
+            platform[len(platform) - 1].append(0)
+
+        platform.append([])
+        for x in range(0, platform_width):
+            platform[len(platform) - 1].append(1)
+
+    ladder_pos = 0
+    for y in range(1, 11, 3):
+        create_row(y)
+
+    platform[platform_height - 2][0: (platform_width - 1)] = [1]*platform_width
+
+    # platform[1][7] = 3
+    # platform[2][y3: x3] = 0, 0, 0
+    # platform[3][7] = 2
+    # platform[4][7] = 4
+    #
+    # platform[4][9] = 3
+    # platform[5][10: 13] = 0, 0, 0
+    # platform[6][9] = 2
+    # platform[7][9] = 4
+    #
+    # platform[7][7] = 3
+    # platform[8][3: 6] = 0, 0, 0
+    # platform[9][7] = 2
+    # platform[10][7] = 4
+
+
+create_platform()
 
 
 solid_ground = [1, 2, 4]
 
 falling = False
+reset = False
 
 
 def show_map():
@@ -85,6 +128,11 @@ def update_player():
     global falling
     global player_x, player_y
     global platform
+    global score
+    global reset
+
+    d_y = 0
+    d_x = 0
 
     if platform[player_y + 1][player_x] in solid_ground:  # If the player is standing on solid ground,
         falling = False  # he shall not fall.
@@ -92,28 +140,57 @@ def update_player():
         falling = True  # Otherwise, he will fall.
 
     if falling:  # If player is falling,
-        player_y += 1  # simulate it!
+        d_y += 1  # simulate it!
 
     if keyboard.up \
         and (platform[player_y][player_x] in [2, 4]
              or platform[player_y + 1][player_x] in [2, 4]):  # If player attempting to climb ladder,
-        player_y -= 1  # let him do so.
+        d_y -= 1  # let him do so.
+    elif keyboard.up \
+            and keyboard.rshift\
+            and platform[player_y - 1][player_x] not in solid_ground\
+            and platform[player_y + 1][player_x] in solid_ground:  # Otherwise, if player attempting to jump,
+        d_y -= 1  # simulate it!
+
+        # Additional Commands to Edit Jump! >>>
+        if keyboard.space and platform[player_y - 2][player_x] not in solid_ground:
+            d_y -= 2
+        if keyboard.left:
+            d_x -= 2
+        if keyboard.right:
+            d_x += 2
 
     if keyboard.down \
             and platform[player_y + 1][player_x] in [1, 2, 4] \
             and platform[player_y + 2][player_x] != 0:  # If player attempting to climb ladder,
-        player_y += 1  # let him do so.
+        d_y += 1  # let him do so.
 
-    if keyboard.right and falling == False:  # If right key and player not falling,
+    if keyboard.right:  # If right key
         if player_x < platform_width - 2:  # and player isn't going to bash into the wall,
-            player_x += 1  # move player to the right.
+            d_x += 1  # move player to the right.
 
-    if keyboard.left and falling == False:  # If left key and player not falling,
+    if keyboard.left:  # If left key
         if player_x > 0:  # and player isn't going to bash into the wall,
-            player_x -= 1  # move player to the left.
+            d_x -= 1  # move player to the left.
 
     if keyboard.space and platform[player_y][player_x] == 3:  # If space and player standing on coin,
-        platform[player_y][player_x] = 0  # let player take coin.
+        platform[player_y][player_x] = 0  # let player take coin,
+        score += 1  # and score a point.
+
+    if platform[player_y][player_x] == 5:  # If space and player standing on portal,
+        create_platform()  # portal away!
+        reset = True
+
+    if reset:
+        clock.unschedule(update_player)
+        player_x = 0
+        player_y = 10
+        clock.schedule_interval(update_player, 0.075)
+
+    else:
+        player_y += d_y
+        player_x += d_x
+        reset = False
 
     pass
 
@@ -121,15 +198,19 @@ def update_player():
 def draw():
     screen.fill(BLUE)
 
+    show_text("SCORE: " + str(score), 1550, 20, WHITE, 75)
+
 
     for y in range(0, platform_height):
         for x in range(0, platform_width):
             if platform[y][x] == 1:
                 draw_image(images.block, x*TILE_SIZE, y*TILE_SIZE)
-            elif platform[y][x] == 4:
-                draw_image(images.ladder, x*TILE_SIZE, y*TILE_SIZE)
             elif platform[y][x] == 3:
                 draw_image(images.coin, x * TILE_SIZE, y * TILE_SIZE)
+            elif platform[y][x] == 4:
+                draw_image(images.ladder, x*TILE_SIZE, y*TILE_SIZE)
+            elif platform[y][x] == 5:
+                draw_image(images.portal, x*TILE_SIZE, y*TILE_SIZE)
 
         if player_y == y:
             draw_player()
