@@ -186,6 +186,7 @@ def update_player():
         player_x = 0
         player_y = 10
         clock.schedule_interval(update_player, 0.075)
+        reset = False
 
     else:
         player_y += d_y
