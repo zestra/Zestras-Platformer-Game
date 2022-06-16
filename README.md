@@ -1,8 +1,6 @@
-# Games
+# My Platformer Game
 
-My Platformer Game.
-
-# Platformer Info
+## Platformer Info
 
 ![](https://github.com/zestra/Games/blob/main/Platformer/Draft%203/images/blue.PNG)
 
@@ -10,7 +8,7 @@ My Platformer Game.
 
 Welcome to my platformer game!
 
-## How to Play
+### How to Play
 
 Press up and down to climb ladders.
     Press left and right to move left and right respectively.
