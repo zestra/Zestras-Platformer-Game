@@ -2,7 +2,7 @@
 
 ## Platformer Info
 
-![](https://github.com/zestra/Games/blob/main/Platformer/Draft%203/images/blue.PNG)
+![]([https://github.com/zestra/Games/blob/main/Platformer/Draft%203/images/blue.PNG](https://github.com/zestra/Zestras-Platformer-Game/blob/main/D80A113E-A91E-4732-8A91-880A461CD73E.png))
 
 ![](https://github.com/zestra/Games/blob/main/Platformer/screen.JPG)
 
