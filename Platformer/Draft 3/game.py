@@ -19,112 +19,102 @@ DARKER_GREY = (10, 10, 10)
 WIDTH = 1920
 HEIGHT = 1050
 
-scale_WIDTH = WIDTH/2
-scale_HEIGHT = HEIGHT/2 - 115
-
-top_left_x = 0  # 90
+top_left_x = 90
 top_left_y = 0
 
-TILE_SIZE = 45
+TILE_SIZE = 90
 
 # PLAYER
 
 player_image = random.choice([images.red, images.green, images.blue])
-player_image2 = {images.red: images.red_image,
-                 images.blue: images.blue_image,
-                 images.green: images.green_image}
 player_x = 0
-player_y = 6
+player_y = 10
 score = 0
+lives = 3
 
-name = "Czeslaw"
+game_over = False
 
 # CREATE MAP
-ladder_pos = 0
+platform_width = int(HEIGHT / TILE_SIZE) * 2
+platform_height = int(WIDTH / TILE_SIZE) - 8
+
+pos = random.randint(3, platform_width - 4)
 
 
 def create_platform():
     global platform, platform_width, platform_height
 
     def create_row(y):
-        global platform, ladder_pos
+        global platform, pos
 
         x = 0
-        x2 = -100
-        while 0 > x2 \
-                and (ladder_pos + 1) not in range(x2 - 1, x + 1) \
-                and 0 < ladder_pos:
-            x = random.randint(3, int(platform_width) - 4)
+        x2 = -1
+        reset = True
+        while reset:
+            x = random.randint(3, platform_width - 4)
             x2 = x - 3
+            if pos not in [x, x - 1, x - 2, x - 3] and x2 > 0:
+                reset = False
 
-        # if y != 1:
-        #     platform[y][x + 1] = 3
-        # else:
-        #     platform[y][x + 1] = 5
-        #
-        # platform[y + 1][x2: x] = 0, 0, 0
-        #
-        # if x + 1 < int(platform_width):
-        #     platform[y + 2][x + 1] = 2
-        #     platform[y + 3][x + 1] = 4
-        # else:
-        #     platform[y + 2][x] = 2
-        #     platform[y + 3][x] = 4
+        platform[y][x2: x] = 0, 0, 0
 
-        ladder_pos = x + 1
+        if y == 2:
+            x4 = random.randint(3, platform_width - 1)
+            while x4 in [x, x - 1, x - 2, x - 3]:
+                x4 = random.randint(3, platform_width - 4)
+            platform[y - 1][x4] = 5
+        else:
+            for i in range(random.randint(1, 6)):
+                x4 = random.randint(3, platform_width - 1)
+                while x4 in [x, x - 1, x - 2, x - 3]:
+                    x4 = random.randint(3, platform_width - 4)
+                platform[y - 1][x4] = random.choice([6, 6, 6, 6, 0, 0, 0, 3, 3, 7])
+
+        x3 = random.randint(3, platform_width - 1)
+        while x3 in [x, x - 1, x - 2, x - 3]:
+            x3 = random.randint(3, platform_width - 4)
+
+        if y != 2:
+            platform[y - 2][x3] = 2
+            platform[y - 1][x3] = 4
+
+        pos = x3
 
     platform = []
 
-    platform_width = scale_WIDTH / TILE_SIZE * 2 - 1
-    platform_height = scale_HEIGHT / TILE_SIZE * 2
-
-    for y in range(0, int(platform_height), 3):
+    for y in range(0, platform_height, 3):
         platform.append([])
-        for x in range(0, int(platform_width)):
+        for x in range(0, platform_width):
             platform[len(platform) - 1].append(0)
 
         platform.append([])
-        for x in range(0, int(platform_width)):
+        for x in range(0, platform_width):
             platform[len(platform) - 1].append(0)
 
         platform.append([])
-        for x in range(0, int(platform_width)):
+        for x in range(0, platform_width):
             platform[len(platform) - 1].append(1)
 
-    ladder_pos = 0
-    for y in range(1, 11, 3):
+    for y in range(11, 1, -3):
         create_row(y)
 
-    platform[int(platform_height) - 2][0: (int(platform_width) - 1)] = [1]*int(platform_width)
+    platform[platform_height - 2][0: (platform_width - 1)] = [1]*platform_width
+    platform[platform_height - 1][0: (platform_width - 1)] = [8]*platform_width
 
-    # platform[1][7] = 3
-    # platform[2][y3: x3] = 0, 0, 0
-    # platform[3][7] = 2
-    # platform[4][7] = 4
-    #
-    # platform[4][9] = 3
-    # platform[5][10: 13] = 0, 0, 0
-    # platform[6][9] = 2
-    # platform[7][9] = 4
-    #
-    # platform[7][7] = 3
-    # platform[8][3: 6] = 0, 0, 0
-    # platform[9][7] = 2
-    # platform[10][7] = 4
 
 
 create_platform()
 
 
-solid_ground = [1, 2, 4]
+solid_ground = [1, 2, 4, 8]
 
 falling = False
 reset = False
 
 
 def show_map():
-    for y in range(0, int(platform_height)):
-        for x in range(0, int(platform_width)):
+    for y in range(0, platform_height):
+        for x in range(0, platform_width):
             print(platform[y][x], end=" ")
         print()
 
@@ -136,8 +126,9 @@ def update_player():
     global falling
     global player_x, player_y
     global platform
-    global score
+    global score, lives
     global reset
+    global game_over
 
     d_y = 0
     d_x = 0
@@ -154,7 +145,6 @@ def update_player():
         and (platform[player_y][player_x] in [2, 4]
              or platform[player_y + 1][player_x] in [2, 4]):  # If player attempting to climb ladder,
         d_y -= 1  # let him do so.
-
     elif keyboard.up \
             and keyboard.rshift\
             and platform[player_y - 1][player_x] not in solid_ground\
@@ -171,21 +161,37 @@ def update_player():
 
     if keyboard.down \
             and platform[player_y + 1][player_x] in [1, 2, 4] \
-            and platform[player_y + 2][player_x] != 0:  # If player attempting to climb ladder,
+            and platform[player_y + 2][player_x] not in [0, 8]:  # If player attempting to climb ladder,
         d_y += 1  # let him do so.
 
-    if keyboard.right:  # If right key,
-        d_x += 1  # move player to the right.
+    if keyboard.right:  # If right key
+        if player_x < platform_width - 2:  # and player isn't going to bash into the wall,
+            d_x += 1  # move player to the right.
 
     if keyboard.left:  # If left key
-        d_x -= 1  # move player to the left.
+        if player_x > 0:  # and player isn't going to bash into the wall,
+            d_x -= 1  # move player to the left.
 
     if keyboard.space and platform[player_y][player_x] == 3:  # If space and player standing on coin,
         platform[player_y][player_x] = 0  # let player take coin,
-        score += 1  # and score a point.
+        score += 1  # score a point,
+        sounds.combine.play()  # and run a sound effect.
+
+    if keyboard.space and platform[player_y][player_x] == 7:  # If space and player standing on heart,
+        platform[player_y][player_x] = 0  # let player take heart,
+        lives += 1
+        score += 1  # score a point,
+        sounds.pickup.play()  # and run a sound effect.
+
+    if platform[player_y][player_x] == 6:  # If player standing on spike,
+        sounds.ouch.play()  # run a sound effect,
+        lives -= 1  # remove a live
+        if score > 0:  # and remove a point if possible.
+            score -= 1
 
     if platform[player_y][player_x] == 5:  # If space and player standing on portal,
         create_platform()  # portal away!
+        sounds.doors.play()
         reset = True
 
     if reset:
@@ -193,67 +199,82 @@ def update_player():
         player_x = 0
         player_y = 10
         clock.schedule_interval(update_player, 0.075)
+        reset = False
 
     else:
         player_y += d_y
-        # while player_y > platform_height:
-        #     player_y += 1
-
         player_x += d_x
-        # while player_x*TILE_SIZE > platform_width - 1:
-        #     player_x += 1
-
         reset = False
+
+    if lives <= 0:
+        clock.unschedule(update_player)
+        game_over = True
+
+        score = 0
+        lives = 3
+        player_x = 0
+        player_y = 10
+
+        clock.schedule_interval(start, 0.01)
+
 
     pass
 
 
+image = {1: images.block,
+            3: images.coin,
+            4: images.ladder,
+            5: images.portal,
+            6: images.spike,
+            7: images.heart,
+            8: images.block2,
+            9: images.virus}
+
+
 def draw():
-    screen.fill(BLACK)
+    global game_over
 
-    # draw_rect(platform_width*TILE_SIZE*0.5 + top_left_x*2,
-    #           platform_height*TILE_SIZE*0.5 + top_left_y,
-    #           platform_width*TILE_SIZE - top_left_x*2,
-    #           platform_height*TILE_SIZE,
-    #           BLUE, None)
+    if game_over is False:
+        screen.fill(BLUE)
 
-    draw_rect(scale_WIDTH,
-              scale_HEIGHT,
-              WIDTH - 80,
-              HEIGHT - 310,
-              BLUE,
-              None)
+        show_text(" X " + str(score), 1550, 20, YELLOW, 75)
+        draw_image(image[3], 1550, 90)
 
-    draw_image(player_image2[player_image], 225, 940.5)
-    show_text(name, 121.5, 949.5, WHITE, 50)
-    show_text("Score: " + str(score), 283.5, 850.5, WHITE, 35)
+        show_text(" X " + str(lives), 400, 20, RED, 75)
+        draw_image(image[7], 400, 90)
 
 
-    # show_text("SCORE: " + str(score), 1550, 20, WHITE, 75)
+        for y in range(0, platform_height):
+            for x in range(0, platform_width):
+                if platform[y][x] in image:
+                    draw_image(image[platform[y][x]], x*TILE_SIZE, y*TILE_SIZE)
 
-    for y in range(0, int(platform_height)):
-        for x in range(0, int(platform_width)):
-            if platform[y][x] == 1:
-                draw_image(images.block, x*TILE_SIZE + 145.5, y*TILE_SIZE + 60)
-            elif platform[y][x] == 3:
-                draw_image(images.coin, x * TILE_SIZE + 145.5, y * TILE_SIZE + 60)
-            elif platform[y][x] == 4:
-                draw_image(images.ladder, x*TILE_SIZE + 145.5, y*TILE_SIZE + 60)
-            elif platform[y][x] == 5:
-                draw_image(images.portal, x*TILE_SIZE + 145.5, y*TILE_SIZE + 60)
+            if player_y == y:
+                draw_player()
+    else:
+        screen.fill(BLACK)
+        show_text("GAME OVER", 600, 475, RED, 120)
+        show_text("  try again? \npress space", 790, 550, WHITE, 40)
 
-        if player_y == y:
-            draw_player()
+
+def start():
+    global game_over, platform
+
+    if keyboard.space:
+        game_over = False
+        clock.schedule_interval(update_player, 0.075)
+        clock.unschedule(start)
+        create_platform()
 
 
 def draw_player():
-    draw_image(player_image, player_x*TILE_SIZE + 145.5, player_y*TILE_SIZE + 60)
+    draw_image(player_image, player_x*TILE_SIZE, player_y*TILE_SIZE)
 
 
 def draw_image(image, x, y):
     screen.blit(image,
-                (x - image.get_width(),
-                y - image.get_height()))
+                (top_left_x + x - image.get_width(),
+                 top_left_y + y - image.get_height()))
 
 
 def draw_rect(x, y,
@@ -261,13 +282,13 @@ def draw_rect(x, y,
               colour=BLACK,
               outline=None):
     if outline is not None:
-        BOX2 = Rect((x - int(width / 2) - 2, y - int(height / 2) - 2),
+        BOX2 = Rect((top_left_x + x - int(width / 2) - 2, top_left_y + y - int(height / 2) - 2),
                     (width + 4, height + 4)
                     )
         screen.draw.rect(BOX2, outline)
 
     if colour is not None:
-        BOX = Rect((x - int(width / 2), y - int(height / 2)),
+        BOX = Rect((top_left_x + x - int(width / 2), top_left_y + y - int(height / 2)),
                    (width, height)
                    )
         screen.draw.filled_rect(BOX, colour)
@@ -277,7 +298,7 @@ def show_text(text_to_show, x, y,
               colour=WHITE,
               size=75):
     screen.draw.text(text_to_show,
-                     (x, y),
+                     (top_left_x + x, top_left_y + y),
                      fontsize=size, color=colour)
 
 clock.schedule_interval(update_player, 0.075)

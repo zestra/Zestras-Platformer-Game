@@ -32,38 +32,32 @@ player_y = 10
 score = 0
 
 # CREATE MAP
-ladder_pos = 0
+pos = 0
 
 
 def create_platform():
     global platform, platform_width, platform_height
 
     def create_row(y):
-        global platform, ladder_pos
+        global platform, pos
 
         x = 0
-        x2 = -100
-        while 0 > x2 \
-                and (ladder_pos + 1) not in range(x2 - 1, x + 1) \
-                and 0 < ladder_pos:
+        x2 = -1
+        while 0 > x2 and pos not in range(x, x2):
             x = random.randint(3, platform_width - 4)
             x2 = x - 3
 
-        if y != 1:
-            platform[y][x + 1] = 3
+        platform[y][x2: x] = 0, 0, 0
+
+        if y != 2:
+            platform[y - 1][x + 1] = 3
         else:
-            platform[y][x + 1] = 5
+            platform[y - 1][x + 1] = 5
 
-        platform[y + 1][x2: x] = 0, 0, 0
+        platform[y + 1][x + 1] = 2
+        platform[y + 2][x + 1] = 4
 
-        if x + 1 < platform_width:
-            platform[y + 2][x + 1] = 2
-            platform[y + 3][x + 1] = 4
-        else:
-            platform[y + 2][x] = 2
-            platform[y + 3][x] = 4
-
-        ladder_pos = x + 1
+        pos = x + 1
 
     platform = []
 
@@ -83,26 +77,11 @@ def create_platform():
         for x in range(0, platform_width):
             platform[len(platform) - 1].append(1)
 
-    ladder_pos = 0
-    for y in range(1, 11, 3):
+    pos = 0
+    for y in range(11, 1, -3):
         create_row(y)
 
     platform[platform_height - 2][0: (platform_width - 1)] = [1]*platform_width
-
-    # platform[1][7] = 3
-    # platform[2][y3: x3] = 0, 0, 0
-    # platform[3][7] = 2
-    # platform[4][7] = 4
-    #
-    # platform[4][9] = 3
-    # platform[5][10: 13] = 0, 0, 0
-    # platform[6][9] = 2
-    # platform[7][9] = 4
-    #
-    # platform[7][7] = 3
-    # platform[8][3: 6] = 0, 0, 0
-    # platform[9][7] = 2
-    # platform[10][7] = 4
 
 
 create_platform()
@@ -175,10 +154,12 @@ def update_player():
 
     if keyboard.space and platform[player_y][player_x] == 3:  # If space and player standing on coin,
         platform[player_y][player_x] = 0  # let player take coin,
-        score += 1  # and score a point.
+        score += 1  # score a point,
+        sounds.combine.play()  # and run a sound effect.
 
     if platform[player_y][player_x] == 5:  # If space and player standing on portal,
         create_platform()  # portal away!
+        sounds.doors.play()
         reset = True
 
     if reset:
