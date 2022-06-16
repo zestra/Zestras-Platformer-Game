@@ -13,3 +13,4 @@ Press left and right to move left and right respectively.
 Press shift - up to jump.
 Press shift - space - up to super jump.
 Press space to collect a coin or heart.
+
