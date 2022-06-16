@@ -8,8 +8,8 @@ Welcome to my platformer game!
 
 ## How to Play
 
-Press up and down to climb ladders
-Press left and right to move left and right respectively.
+Press up and down to climb ladders.
+    Press left and right to move left and right respectively.
 Press shift - up to jump.
 Press shift - space - up to super jump.
 Press space to collect a coin or heart.
