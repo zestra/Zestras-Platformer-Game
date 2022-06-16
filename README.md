@@ -4,6 +4,8 @@
 
 ![](https://github.com/zestra/Games/blob/main/Platformer/Draft%203/images/blue.PNG)
 
+![](https://github.com/zestra/Games/blob/main/Platformer/screen.JPG)
+
 Welcome to my platformer game!
 
 ## How to Play
