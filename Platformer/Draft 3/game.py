@@ -32,7 +32,7 @@ player_y = 10
 score = 0
 lives = 3
 
-game_over = False
+status = 0  # 0 = Start, 1 = Play, 2 = End
 
 # CREATE MAP
 platform_width = int(HEIGHT / TILE_SIZE) * 2
@@ -128,7 +128,7 @@ def update_player():
     global platform
     global score, lives
     global reset
-    global game_over
+    global status
 
     d_y = 0
     d_x = 0
@@ -208,13 +208,7 @@ def update_player():
 
     if lives <= 0:
         clock.unschedule(update_player)
-        game_over = True
-
-        score = 0
-        lives = 3
-        player_x = 0
-        player_y = 10
-
+        status = 2
         clock.schedule_interval(start, 0.01)
 
 
@@ -232,9 +226,16 @@ image = {1: images.block,
 
 
 def draw():
-    global game_over
+    global status
 
-    if game_over is False:
+    if status == 0:
+        screen.fill(BLACK)
+
+        draw_image(images.app, 1050, 600)
+        show_text("press space to play", 760, 605, WHITE, 35)
+
+
+    elif status == 1:
         screen.fill(BLUE)
 
         show_text(" X " + str(score), 1550, 20, YELLOW, 75)
@@ -251,20 +252,43 @@ def draw():
 
             if player_y == y:
                 draw_player()
-    else:
+
+    elif status == 2:
         screen.fill(BLACK)
-        show_text("GAME OVER", 600, 475, RED, 120)
-        show_text("  try again? \npress space", 790, 550, WHITE, 40)
+        show_text("GAME OVER", 600, 125, RED, 120)
+        show_text("  try again? \npress space", 790, 200, WHITE, 40)
+
+        show_text(" X " + str(score), 835, 500, YELLOW, 75)
+        draw_image(image[3], 835, 550)
+
+        show_text(" X " + str(lives), 835, 400, RED, 75)
+        draw_image(image[7], 835, 450)
+
+        show_text(" +__________ ", 685, 525, WHITE, 80)
+
+        show_text(" X " + str(score*10 + lives*5), 835, 650, YELLOW, 75)
+        draw_image(image[3], 835, 700)
+
+
+
 
 
 def start():
-    global game_over, platform
+    global status, platform
+    global score, lives, player_x, player_y
 
-    if keyboard.space:
-        game_over = False
+    if keyboard.space and status in [0, 2]:
+        status = 1
+
+        score = 0
+        lives = 3
+        player_x = 0
+        player_y = 10
+
         clock.schedule_interval(update_player, 0.075)
         clock.unschedule(start)
         create_platform()
+
 
 
 def draw_player():
@@ -301,5 +325,7 @@ def show_text(text_to_show, x, y,
                      (top_left_x + x, top_left_y + y),
                      fontsize=size, color=colour)
 
-clock.schedule_interval(update_player, 0.075)
+clock.schedule_interval(start, 0.01)
+
+
 pgzrun.go()
